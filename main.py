@@ -2,7 +2,6 @@ import os
 from flask import Flask, request, jsonify, render_template
 import docx
 import PyPDF2
-from pdfminer.high_level import extract_text
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -21,7 +20,9 @@ os.makedirs(EXPERT_FOLDER, exist_ok=True)
 
 # Initialize NLTK
 nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
+
 
 
 # Extract text from DOCX
@@ -140,22 +141,25 @@ def upload_resume():
             return jsonify({'error': str(e)})
 
 
-# Flask route to handle file uploads for expert portfolios
-@app.route('/upload_expert', methods=['POST'])
-def upload_expert():
-    if 'file' not in request.files:
+# Flask route to handle multiple expert portfolio uploads
+@app.route('/upload_experts', methods=['POST'])
+def upload_experts():
+    if 'files[]' not in request.files:
         return jsonify({'error': 'No file part'})
 
-    file = request.files['file']
+    files = request.files.getlist('files[]')
 
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'})
+    if len(files) == 0:
+        return jsonify({'error': 'No selected files'})
 
-    if file:
-        file_path = os.path.join(EXPERT_FOLDER, file.filename)
-        file.save(file_path)
+    saved_files = []
+    for file in files:
+        if file.filename:
+            file_path = os.path.join(EXPERT_FOLDER, file.filename)
+            file.save(file_path)
+            saved_files.append(file.filename)
 
-        return jsonify({'status': 'success', 'message': f'Expert portfolio {file.filename} uploaded successfully'})
+    return jsonify({'status': 'success', 'message': f'{len(saved_files)} expert portfolios uploaded successfully'})
 
 
 # Route for the main HTML page
