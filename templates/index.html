@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Matching</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Files for Portfolio Matching</h1>
+
+        <h2>Upload Your Resume</h2>
+        <form id="uploadResumeForm" enctype="multipart/form-data">
+            <input type="file" name="file" id="resumeFileInput" accept=".docx, .pdf, .txt" required>
+            <button type="submit">Upload Resume</button>
+        </form>
+
+        <h2>Upload Expert Portfolio</h2>
+        <form id="uploadExpertForm" enctype="multipart/form-data">
+            <input type="file" name="file" id="expertFileInput" accept=".docx, .pdf, .txt" required>
+            <button type="submit">Upload Expert Portfolio</button>
+        </form>
+
+        <h2>Ranked Experts</h2>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Handle resume upload
+        document.getElementById('uploadResumeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('resumeFileInput');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload_resume', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = ''; // Clear previous results
+                if (data.status === 'success') {
+                    data.experts.forEach(expert => {
+                        const expertInfo = document.createElement('p');
+                        expertInfo.innerHTML = `Expert: ${expert.name}, Domain Similarity: ${expert.domain_similarity.toFixed(2)}`;
+                        resultDiv.appendChild(expertInfo);
+                    });
+                } else {
+                    resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+
+        // Handle expert portfolio upload
+        document.getElementById('uploadExpertForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('expertFileInput');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload_expert', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `<p>${data.message}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
